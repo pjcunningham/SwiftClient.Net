@@ -2,6 +2,7 @@
 using net.openstack.Providers.Rackspace;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -57,6 +58,20 @@ namespace SwiftClient.Commands {
             provider.DeleteObject(container: container, objectName: objectname);
         }
 
+        private void DeleteObjectsFromList(CloudIdentity cloudIdentity, string container, string filename) {
+            var provider = new CloudFilesProvider(cloudIdentity);
+
+            foreach (string line in File.ReadLines(filename)) {
+                provider.DeleteObject(container: container, objectName: line);
+            }
+            
+        }
+
+        private void DeleteContainer(CloudIdentity cloudIdentity, string container) {
+            var provider = new CloudFilesProvider(cloudIdentity);
+            provider.DeleteContainer(container: container, deleteObjects: true);
+        }
+
         private void ListContainer(CloudIdentity cloudIdentity, string container, int? limit = null, string marker = null, string markerEnd = null, string prefix = null, string region = null, bool useInternalUrl = false) {
             var provider = new CloudFilesProvider(cloudIdentity);
             var containerObjects = provider.ListObjects(container, limit, marker, markerEnd, prefix, region, useInternalUrl, cloudIdentity);
@@ -104,11 +119,37 @@ namespace SwiftClient.Commands {
 
         }
 
+        public int DeleteObjectsFromList(string container, string filename) {
+
+            try {
+                var ci = CreateIdentity(fUser, fKey);
+                DeleteObjectsFromList(ci, container, filename);
+                return 0;
+            } catch (Exception ex) {
+                WriteErrorMessage(ex.Message);
+                return -1;
+            }
+
+        }
+
         public int DeleteObject(string container, string filename) {
 
             try {
                 var ci = CreateIdentity(fUser, fKey);
                 DeleteObject(ci, container, filename);
+                return 0;
+            } catch (Exception ex) {
+                WriteErrorMessage(ex.Message);
+                return -1;
+            }
+
+        }
+
+        public int DeleteContainer(string container) {
+
+            try {
+                var ci = CreateIdentity(fUser, fKey);
+                DeleteContainer(ci, container);
                 return 0;
             } catch (Exception ex) {
                 WriteErrorMessage(ex.Message);

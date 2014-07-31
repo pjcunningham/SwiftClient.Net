@@ -59,6 +59,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\DeleteFromFileCommand.cs" />
+    <Compile Include="Commands\DeleteContainerCommand.cs" />
     <Compile Include="Commands\Provider.cs" />
     <Compile Include="Commands\DeleteCommand.cs" />
     <Compile Include="Commands\DownloadCommand.cs" />
