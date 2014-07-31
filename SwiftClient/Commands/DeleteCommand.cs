@@ -1,21 +1,23 @@
-﻿using ManyConsole;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-namespace SwiftClient.Command.Delete
+namespace SwiftClient.Commands
 {
-    public class DeleteCommand : ConsoleCommand {
+    public class DeleteCommand : SwiftClientCommand {
 
         public DeleteCommand() {
-            IsCommand("delete", "Delete a container or objects within a container.");
+            IsCommand("delete", "Delete an object within a container.");
+            this.HasRequiredOption("container=", "Name of container to delete the object from.", s => ContainerOption = s);
+            this.HasRequiredOption("objectname=", "Name of object to delete.", s => ObjectnameOption = s);
         }
 
-        public override int Run(string[] remainingArguments) {
+        public string ContainerOption { get; private set; }
+        public string ObjectnameOption { get; private set; }
 
+        public override int Execute() {
 
-            return 0;
+            return this.Provider.DeleteObject(ContainerOption, ObjectnameOption);;
         }
     }
 }

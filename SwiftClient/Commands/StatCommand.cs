@@ -1,11 +1,10 @@
 ﻿using ManyConsole;
-using SwiftClient.Command.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SwiftClient.Command.Stat {
+namespace SwiftClient.Commands {
     public class StatCommand : SwiftClientCommand {
 
         public StatCommand()
@@ -13,8 +12,7 @@ namespace SwiftClient.Command.Stat {
             IsCommand("stat", "Displays information for the account, container, or object.");
         }
 
-        public override int Run(string[] remainingArguments) {
-
+        public override int Execute() {
             if (VersionOption) {
                 Console.WriteLine("Version Option is on");
             }
