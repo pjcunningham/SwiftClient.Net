@@ -16,6 +16,7 @@ namespace SwiftClient.Commands {
 
             this.HasRequiredOption("user=", "<username>", s => UserOption = s);
             this.HasRequiredOption("key=", "<api_key>", s => KeyOption = s);
+            this.HasRequiredOption("region=", "<region>", s => RegionOption = s);
 
             this.SkipsCommandSummaryBeforeRunning();
 
@@ -32,12 +33,13 @@ namespace SwiftClient.Commands {
 
         public string UserOption { get; set; }
         public string KeyOption { get; set; }
+        public string RegionOption { get; set; }
 
         public abstract int Execute();
 
         public override int Run(string[] remainingArguments) {
 
-            Provider = new Provider(UserOption, KeyOption);
+            Provider = new Provider(UserOption, KeyOption, RegionOption);
 
             if (string.IsNullOrEmpty(OutputOption)) {
 
