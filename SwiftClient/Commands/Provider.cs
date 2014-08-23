@@ -11,10 +11,12 @@ namespace SwiftClient.Commands {
 
         private readonly string fUser;
         private readonly string fKey;
+        private readonly string fRegion;
 
-        public Provider(string user, string key) {
+        public Provider(string user, string key, string region) {
             fUser = user;
             fKey = key;
+            fRegion = region;
         }
 
         private static void WriteErrorMessage(string message) {
@@ -55,21 +57,18 @@ namespace SwiftClient.Commands {
 
         private void DeleteObject(CloudIdentity cloudIdentity, string container, string objectname) {
             var provider = new CloudFilesProvider(cloudIdentity);
-            provider.DeleteObject(container: container, objectName: objectname);
+            provider.DeleteObject(container: container, objectName: objectname, region: fRegion);
         }
 
         private void DeleteObjectsFromList(CloudIdentity cloudIdentity, string container, string filename) {
             var provider = new CloudFilesProvider(cloudIdentity);
-
-            foreach (string line in File.ReadLines(filename)) {
-                provider.DeleteObject(container: container, objectName: line);
-            }
-            
+            provider.DeleteObjects(container: container, objects:File.ReadLines(filename), region: fRegion);
+           
         }
 
         private void DeleteContainer(CloudIdentity cloudIdentity, string container) {
             var provider = new CloudFilesProvider(cloudIdentity);
-            provider.DeleteContainer(container: container, deleteObjects: true);
+            provider.DeleteContainer(container: container, deleteObjects: true, region: fRegion);
         }
 
         private void ListContainer(CloudIdentity cloudIdentity, string container, int? limit = null, string marker = null, string markerEnd = null, string prefix = null, string region = null, bool useInternalUrl = false) {
@@ -97,7 +96,7 @@ namespace SwiftClient.Commands {
 
             try {
                 var ci = CreateIdentity(fUser, fKey);
-                ListContainer(ci, container, prefix: prefix);
+                ListContainer(ci, container, prefix: prefix, region: fRegion);
                 return 0;
             } catch (Exception ex) {
                 WriteErrorMessage(ex.Message);
