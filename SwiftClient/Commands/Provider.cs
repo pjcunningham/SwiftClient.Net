@@ -42,14 +42,6 @@ namespace SwiftClient.Commands {
             return result;
         }
 
-        private void ListContainers(CloudIdentity cloudIdentity) {
-            var provider = new CloudFilesProvider(cloudIdentity);
-            var containers = provider.ListContainers();
-            foreach (var container in containers) {
-                Console.WriteLine(container.Name);
-            }
-        }
-
         private void UploadObject(CloudIdentity cloudIdentity, string container, string objectname, string filename) {
             var provider = new CloudFilesProvider(cloudIdentity);
             provider.CreateObjectFromFile(container: container, filePath: filename, objectName: objectname, progressUpdated: ProgressCallback);
@@ -60,30 +52,52 @@ namespace SwiftClient.Commands {
             provider.DeleteObject(container: container, objectName: objectname, region: fRegion);
         }
 
-        private void DeleteObjectsFromList(CloudIdentity cloudIdentity, string container, string filename) {
-            var provider = new CloudFilesProvider(cloudIdentity);
-            provider.DeleteObjects(container: container, objects:File.ReadLines(filename), region: fRegion);
-           
-        }
-
         private void DeleteContainer(CloudIdentity cloudIdentity, string container) {
             var provider = new CloudFilesProvider(cloudIdentity);
             provider.DeleteContainer(container: container, deleteObjects: true, region: fRegion);
         }
 
-        private void ListContainer(CloudIdentity cloudIdentity, string container, int? limit = null, string marker = null, string markerEnd = null, string prefix = null, string region = null, bool useInternalUrl = false) {
+        private IEnumerable<Container> ListContainers(CloudIdentity cloudIdentity, int? limit = null, string region = null, bool useInternalUrl = false) {
             var provider = new CloudFilesProvider(cloudIdentity);
-            var containerObjects = provider.ListObjects(container, limit, marker, markerEnd, prefix, region, useInternalUrl, cloudIdentity);
-            foreach (var containerObject in containerObjects) {
-                Console.WriteLine(containerObject.Name);
-            }
+
+            Container lastContainer = null;
+
+            do {
+                string marker = lastContainer != null ? lastContainer.Name : null;
+                IEnumerable<Container> containerObjects = provider.ListContainers(limit, marker, null, region, useInternalUrl, cloudIdentity);
+                lastContainer = null;
+                foreach (Container containerObject in containerObjects) {
+                    lastContainer = containerObject;
+                    yield return containerObject;
+                }
+            } while (lastContainer != null);
+
+        }
+
+        private IEnumerable<ContainerObject> ListContainer(CloudIdentity cloudIdentity, string container, int? limit = null, string prefix = null, string region = null, bool useInternalUrl = false) {
+            var provider = new CloudFilesProvider(cloudIdentity);
+
+            ContainerObject lastContainerObject = null;
+
+            do {
+                string marker = lastContainerObject != null ? lastContainerObject.Name : null;
+                IEnumerable<ContainerObject> containerObjects = provider.ListObjects(container, limit, marker, null, prefix, region, useInternalUrl, cloudIdentity);
+                lastContainerObject = null;
+                foreach (ContainerObject containerObject in containerObjects) {
+                    lastContainerObject = containerObject;
+                    yield return containerObject;
+                }
+            } while (lastContainerObject != null);
+
         }
 
         public int ListContainers() {
 
             try {
                 var ci = CreateIdentity(fUser, fKey);
-                ListContainers(ci);
+
+                foreach (Container container in ListContainers(ci, region: fRegion))
+                    Console.WriteLine(container.Name);
                 return 0;
             } catch (Exception ex) {
                 WriteErrorMessage(ex.Message);
@@ -96,7 +110,8 @@ namespace SwiftClient.Commands {
 
             try {
                 var ci = CreateIdentity(fUser, fKey);
-                ListContainer(ci, container, prefix: prefix, region: fRegion);
+                foreach (ContainerObject containerObject in ListContainer(ci, container, prefix: prefix, region: fRegion))
+                    Console.WriteLine(containerObject.Name);
                 return 0;
             } catch (Exception ex) {
                 WriteErrorMessage(ex.Message);
@@ -122,7 +137,10 @@ namespace SwiftClient.Commands {
 
             try {
                 var ci = CreateIdentity(fUser, fKey);
-                DeleteObjectsFromList(ci, container, filename);
+                var provider = new CloudFilesProvider(ci);
+                foreach (var chunk in File.ReadLines(filename).ChunkData(8192)) {
+                    provider.DeleteObjects(container: container, objects: chunk, region: fRegion);
+                }
                 return 0;
             } catch (Exception ex) {
                 WriteErrorMessage(ex.Message);
